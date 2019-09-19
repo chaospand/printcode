@@ -28,8 +28,8 @@ class Application(tk.Frame):
         self.packageText = ttk.Label(self.frame_right_top, text="包装净重")
         self.packageText.grid(row=2, column=0, pady=10, sticky="e")
 
-        self.cb = ttk.Combobox(self.frame_right_top, textvariable = self., width=20)
-        self.cb['values'] = ('Python', 'Swift', 'Kotlin')
+        self.cb = ttk.Combobox(self.frame_right_top, width=20)
+        #self.cb['values'] = ('Python', 'Swift', 'Kotlin')
         self.cb.grid(row=2, column=1, padx=10,sticky="w")
 
         # 追溯码
@@ -85,11 +85,11 @@ class Application(tk.Frame):
 
         # 给表格中添加数据
         #self.tree.insert('', "end", values=('大豆', 21, '60kg', '3121211034'))
-        # self.tree.insert('', 1, values=('花生', 21, '54kg', '3121211033'))
-        # self.tree.insert('', 2,  values=('玉米', 21, '65kg', '3121211023'))
-        # self.tree.insert('', 3,  values=('土豆', 21, '34kg', '3121211053'))
-        # self.tree.insert('', 4,  values=('番茄', 21, '65kg', '3121211063'))
-        # self.tree.insert('', 6,  values=('高粱', 21, '64kg', '3121211073'))
+        self.tree.insert('', 1, values=('花生', 21, '54kg', '3121211033'))
+        self.tree.insert('', 2,  values=('玉米', 21, '65kg', '3121211023'))
+        self.tree.insert('', 3,  values=('土豆', 21, '34kg', '3121211053'))
+        self.tree.insert('', 4,  values=('番茄', 21, '65kg', '3121211063'))
+        self.tree.insert('', 6,  values=('高粱', 21, '64kg', '3121211073'))
         # self.tree.insert('', 7, values=('大豆', 21, '60kg', '3121211034'))
         # self.tree.insert('', 8, values=('花生', 21, '54kg', '3121211033'))
         # self.tree.insert('', 9, values=('玉米', 21, '65kg', '3121211023'))
@@ -114,16 +114,28 @@ class Application(tk.Frame):
         self.frame_center.grid_propagate(0)
 
     def select_item(self, xx):
-        item = self.tree.selection()[0]
-
+        #item = self.tree.selection()[0]
         iids = self.tree.selection()
-        print(self.tree.item(item))
-        focus = self.tree.focus()
-        for i in iids:
-            print(i)
-        print(item)
-        print(xx)
-        print(focus)
+        print(iids)
+        #iids = list(iids)
+        print(iids)
+        # if item in iids:
+        #     print("contain item")
+        #     iids.remove(item)
+        # else:
+        #     print("no contain item")
+        #     iids.append(item)
+        #iids = tuple(iids)
+        self.tree.selection_toggle(iids)
+
+        # print(iids)
+        # print(self.tree.item(item))
+        # focus = self.tree.focus()
+        # for i in iids:
+        #     print(i)
+        # print(item)
+        # print(xx)
+        # print(focus)
 
     def change(self):
         from tkinter import messagebox
@@ -138,25 +150,44 @@ class Application(tk.Frame):
 
 
     def query_data(self):
+        from tkinter import messagebox
         queryCode = self.queryCode.get()
+        queryCode = queryCode.strip()
+        print(queryCode)
         gd = GrepData()
-        listData = gd.query_data(queryCode)
+        if queryCode == None or queryCode =="":
+            messagebox.showinfo(title=None, message="请输入批次编号")
+        else:
+            try:
+                listData = gd.query_data(queryCode)
+            except:
+                messagebox.showinfo(title=None, message="网络出错,请重试")
+                print("网络出错,请重试")
+            else:
+                self.filterData(listData)
+
+
+
+    def filterData(self,listData):
         print(listData)
-        print(listData[0])
-        print(listData[1])
+        cbvalue = self.cb.get()
+        print("self.cb.get:".cbvalue)
         items = self.tree.get_children()
         [self.tree.delete(item) for item in items]
         weightDict = {}
-
         for i in range(0, len(listData)):
             item = listData[i]
-            #print(item)
+            # print(item)
             weight = item["weight"]
             xx = weight in weightDict
             if xx == False:
                 weightDict[weight] = i
             self.tree.insert('', i, values=(item["herbsName"], item["specis"], item["weight"], item["traceGroupId"]))
+        print(self.cb['value'])
         print(weightDict)
+        print("xx")
+        self.cb['values'] = tuple(weightDict.keys())
+        self.cb.bind("<<ComboboxSelected>>", self.filterData)
 
     def say_hi(self):
         print("hi there, everyone!")
